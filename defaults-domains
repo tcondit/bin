@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# TODO Fetch and parse list of domains. Don't make the user do it.
+# See the top rated answer here https://stackoverflow.com/a/918931
+# Don't forget to unset $IFS
+
+#/ Export all MacOS "defaults" domains to individual XML
+#/ files. See 'man defaults', or 'defaults help' on a Mac.
+#/
+#/ usage: defaults-domains <input-file> <target-dir>
+#/
+#/ example: defaults-domains one-per-line defaultsXML
+
+set -euo pipefail
+
+DEFAULTS=defaults
+
+# Guard against zero-length argument strings.
+if [[ -z "${1:-}" ]] || [[ -z "${2:-}" ]]; then
+  grep '^#/' < "${0}" | cut -c4-
+	exit 1
+fi
+
+# Ensure input-file available.
+if [ ! -f $1 ]; then
+  echo $1: unreadable or not found
+  exit 1
+fi
+
+# Ensure target-dir not present, or if present, that it's empty.
+if [ ! -d $2 ]; then
+  mkdir $2
+elif [ "$(ls -A $2)" ]; then
+  echo $2: directory not empty
+  exit 1
+fi
+
+# Inputs have been minimally validated. Construct file names and call defaults.
+
+# read input file
+while read -r line
+  do $DEFAULTS export $line - > $2/${line}.xml
+done < $1
